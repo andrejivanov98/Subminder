@@ -1,3 +1,4 @@
+// src/components/NotificationCenter.tsx
 import { Bell, Check, Trash2 } from "lucide-react";
 import type { AppNotification } from "../types";
 import { db, doc, deleteDoc, updateDoc } from "../firebase";
@@ -45,59 +46,77 @@ export default function NotificationCenter({
 
   return (
     <div className="p-4 max-w-2xl mx-auto pb-24">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+      {/* Header Section */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Notifications
+          </h1>
+          {/* Added Subtitle */}
+          <p className="text-slate-400 text-sm mt-1">
+            Alerts for your upcoming payments.
+          </p>
+        </div>
         <button
           onClick={onClose}
-          className="text-indigo-600 font-medium text-sm"
+          className="text-blue-400 font-medium text-sm hover:text-blue-300 transition-colors mt-1"
         >
           Close
         </button>
       </div>
 
       {sortedNotifications.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-          <div className="bg-indigo-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Bell className="text-indigo-400" size={24} />
+        <div className="text-center py-12 bg-slate-900 rounded-2xl border border-slate-800">
+          <div className="bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Bell className="text-slate-400" size={24} />
           </div>
-          <p className="text-gray-500">No notifications yet.</p>
+          <p className="text-slate-400 font-medium">No notifications yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {sortedNotifications.map((notif) => (
             <div
               key={notif.id}
-              className={`bg-white p-4 rounded-lg shadow-sm border-l-4 transition-all cursor-pointer ${
-                notif.read ? "border-gray-200 opacity-75" : "border-indigo-500"
+              className={`relative p-4 rounded-xl border transition-all cursor-pointer ${
+                notif.read
+                  ? "bg-slate-900/50 border-slate-800 opacity-60"
+                  : "bg-slate-900 border-slate-700 shadow-sm"
               }`}
               onClick={() => handleMarkAsRead(notif)}
             >
-              <div className="flex justify-between items-start">
+              {/* Unread Indicator Strip */}
+              {!notif.read && (
+                <div className="absolute left-0 top-4 bottom-4 w-1 bg-blue-500 rounded-r-full" />
+              )}
+
+              <div className="flex justify-between items-start pl-2">
                 <div className="flex-1">
                   <h3
-                    className={`font-semibold text-gray-900 ${
+                    className={`text-sm text-white ${
                       notif.read ? "font-medium" : "font-bold"
                     }`}
                   >
                     {notif.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">{notif.body}</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {new Date(notif.date).toLocaleDateString()} at{" "}
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    {notif.body}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-3">
+                    {new Date(notif.date).toLocaleDateString()} •{" "}
                     {new Date(notif.date).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </p>
                 </div>
-                <div className="flex flex-col space-y-2 ml-2">
+                <div className="flex flex-col space-y-2 ml-3">
                   {!notif.read && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleMarkAsRead(notif);
                       }}
-                      className="p-1 text-indigo-600 hover:bg-indigo-50 rounded-full"
+                      className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-full transition-colors"
                       title="Mark as read"
                     >
                       <Check size={16} />
@@ -108,7 +127,7 @@ export default function NotificationCenter({
                       e.stopPropagation();
                       handleDelete(notif.id);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full"
+                    className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

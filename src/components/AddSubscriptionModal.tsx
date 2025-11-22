@@ -1,3 +1,4 @@
+// src/components/AddSubscriptionModal.tsx
 import { useState, useEffect, type FormEvent } from "react";
 import { X } from "lucide-react";
 import type {
@@ -5,9 +6,17 @@ import type {
   SubscriptionCycle,
   SubscriptionCategory,
   Subscription,
-  Currency, // Import Currency
 } from "../types";
-import { db, collection, addDoc, doc, updateDoc, Timestamp } from "../firebase";
+import {
+  db,
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+} from "../firebase";
+import AlertModal from "./AlertModal";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -26,7 +35,6 @@ const CATEGORIES: SubscriptionCategory[] = [
   "Other",
 ];
 const CYCLES: SubscriptionCycle[] = ["monthly", "yearly", "weekly"];
-const CURRENCIES: Currency[] = ["USD", "EUR", "MKD", "GBP"]; // Available options
 
 export default function AddSubscriptionModal({
   isOpen,
@@ -37,7 +45,7 @@ export default function AddSubscriptionModal({
   const [formData, setFormData] = useState<SubscriptionFormData>({
     serviceName: "",
     cost: 0,
-    currency: "EUR", // Default currency
+    currency: "USD",
     nextBillDate: getTodayDate(),
     cycle: "monthly",
     category: "Entertainment",
@@ -45,64 +53,97 @@ export default function AddSubscriptionModal({
     reminderDays: 3,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFree, setIsFree] = useState(false); // New state for free subs
 
-  // --- EFFECT: Pre-fill form if editing ---
+  // Confirmation Dialog State
+  const [confirmAction, setConfirmAction] = useState<
+    "delete" | "extend" | null
+  >(null);
+
+  // Alert Modal State
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({ isOpen: false, title: "", message: "" });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertState({ isOpen: true, title, message });
+  };
+
+  const closeAlert = () => {
+    setAlertState((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     if (isOpen) {
+      setConfirmAction(null);
       if (initialData) {
-        // Edit Mode: Populate fields
         setFormData({
           serviceName: initialData.serviceName,
           cost: initialData.cost,
-          currency: initialData.currency || "EUR", // Handle legacy data
+          currency: "USD",
           nextBillDate: initialData.nextBillDate,
           cycle: initialData.cycle,
           category: initialData.category,
           managementUrl: initialData.managementUrl || "",
           reminderDays: initialData.reminderDays || 3,
         });
+        setIsFree(initialData.cost === 0); // Set toggle based on existing cost
       } else {
-        // Add Mode: Reset to default
         setFormData({
           serviceName: "",
           cost: 0,
-          currency: "EUR", // Default
+          currency: "USD",
           nextBillDate: getTodayDate(),
           cycle: "monthly",
           category: "Entertainment",
           managementUrl: "",
           reminderDays: 3,
         });
+        setIsFree(false);
       }
     }
   }, [isOpen, initialData]);
 
+  // Update cost to 0 if isFree is toggled on
+  useEffect(() => {
+    if (isFree) {
+      setFormData((prev) => ({ ...prev, cost: 0 }));
+    }
+  }, [isFree]);
+
   if (!isOpen) return null;
 
-  // --- SUBMIT HANDLER ---
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!formData.serviceName || formData.cost <= 0 || !formData.nextBillDate) {
-      alert("Please fill out all required fields with valid values.");
+    // Updated validation: Allow cost 0 if isFree is true
+    if (
+      !formData.serviceName ||
+      (!isFree && formData.cost <= 0) ||
+      !formData.nextBillDate
+    ) {
+      showAlert(
+        "Invalid Fields",
+        "Please fill out all required fields. Cost must be greater than 0 unless 'Free / Trial' is selected."
+      );
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Timezone Fix
       const dateString = formData.nextBillDate;
       const parts = dateString.split("-").map((p) => parseInt(p, 10));
       const utcDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
 
       const dataToSave = {
         ...formData,
+        cost: isFree ? 0 : formData.cost, // Ensure 0 if free
         nextBillDate: Timestamp.fromDate(utcDate),
-        // reminderDays and currency are already in ...formData
       };
 
       if (initialData) {
-        // --- UPDATE EXISTING ---
         const subRef = doc(
           db,
           "users",
@@ -111,18 +152,15 @@ export default function AddSubscriptionModal({
           initialData.id
         );
         await updateDoc(subRef, dataToSave);
-        console.log("Subscription updated!");
       } else {
-        // --- CREATE NEW ---
         const subsCollection = collection(db, "users", userId, "subscriptions");
         await addDoc(subsCollection, dataToSave);
-        console.log("Subscription added!");
       }
 
       onClose();
     } catch (error) {
       console.error("Error saving subscription:", error);
-      alert("Failed to save subscription. Please try again.");
+      showAlert("Error", "Failed to save subscription. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,59 +172,187 @@ export default function AddSubscriptionModal({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      // Parse numbers for cost AND reminderDays
       [name]:
         name === "cost" || name === "reminderDays" ? parseFloat(value) : value,
     }));
   };
 
-  return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex justify-between items-center p-4 border-b">
-            <h2 className="text-xl font-semibold">
-              {initialData ? "Edit Subscription" : "Add Subscription"}
-            </h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2"
-            >
-              <X size={24} />
-            </button>
-          </div>
+  const handleDelete = async () => {
+    if (!initialData) return;
+    setIsSubmitting(true);
+    try {
+      const docRef = doc(db, "users", userId, "subscriptions", initialData.id);
+      await deleteDoc(docRef);
+      onClose();
+    } catch (error) {
+      console.error("Error deleting subscription:", error);
+      showAlert("Error", "Failed to delete subscription.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-          {/* Body */}
-          <div className="p-6 space-y-4 overflow-y-auto">
+  const handleExtend = async () => {
+    if (!initialData) return;
+    setIsSubmitting(true);
+
+    try {
+      const currentNextBill = new Date(initialData.nextBillDate);
+      const newNextBill = new Date(currentNextBill);
+
+      if (initialData.cycle === "monthly") {
+        newNextBill.setMonth(newNextBill.getMonth() + 1);
+      } else if (initialData.cycle === "yearly") {
+        newNextBill.setFullYear(newNextBill.getFullYear() + 1);
+      } else if (initialData.cycle === "weekly") {
+        newNextBill.setDate(newNextBill.getDate() + 7);
+      }
+
+      const subRef = doc(db, "users", userId, "subscriptions", initialData.id);
+      await updateDoc(subRef, {
+        nextBillDate: Timestamp.fromDate(newNextBill),
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Error extending subscription:", error);
+      showAlert("Error", "Failed to extend subscription.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const labelClass =
+    "block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider";
+  const inputClass =
+    "w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-600 transition-all";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+      {/* Alert Modal Overlay */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        title={alertState.title}
+        message={alertState.message}
+        onClose={closeAlert}
+      />
+
+      <div className="absolute inset-0" onClick={onClose} />
+
+      <div className="relative bg-slate-900 w-full max-w-md rounded-2xl border border-slate-800 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[85dvh] overflow-hidden">
+        {/* Confirmation Overlay for Actions */}
+        {confirmAction && (
+          <div className="absolute inset-0 z-20 bg-slate-900/95 backdrop-blur flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
+            <h3 className="text-xl font-bold text-white mb-2">
+              {confirmAction === "delete"
+                ? "Delete Subscription?"
+                : "Extend Subscription?"}
+            </h3>
+            <p className="text-slate-400 mb-8 text-sm">
+              {confirmAction === "delete"
+                ? `Are you sure you want to delete ${formData.serviceName}? This action cannot be undone.`
+                : `Are you sure you want to extend ${
+                    formData.serviceName
+                  }? This will advance the billing date by one ${formData.cycle.replace(
+                    "ly",
+                    ""
+                  )}.`}
+            </p>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 py-3 rounded-xl bg-slate-800 text-white font-medium hover:bg-slate-700 transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={
+                  confirmAction === "delete" ? handleDelete : handleExtend
+                }
+                className={`flex-1 py-3 rounded-xl text-white font-bold transition-colors shadow-lg ${
+                  confirmAction === "delete"
+                    ? "bg-red-600 hover:bg-red-500 shadow-red-900/20"
+                    : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/20"
+                }`}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Processing..."
+                  : confirmAction === "delete"
+                  ? "Delete"
+                  : "Extend"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="flex justify-between items-center p-5 border-b border-slate-800 shrink-0">
+          <h2 className="text-lg font-bold text-white">
+            {initialData ? "Edit Subscription" : "Add Subscription"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Scrollable Form */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
+          <form id="subForm" onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Service Name
-              </label>
+              <label className={labelClass}>Service Name</label>
               <input
                 type="text"
                 name="serviceName"
                 value={formData.serviceName}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                placeholder="e.g., Netflix"
+                className={inputClass}
+                placeholder="e.g. Netflix"
                 required
               />
             </div>
 
-            {/* --- UPDATED COST SECTION WITH CURRENCY --- */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Cost
-                </label>
+            {/* Cost with Toggle */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className={labelClass}>Cost</label>
+                {/* Free/Trial Toggle */}
+                <div
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => setIsFree(!isFree)}
+                >
+                  <span
+                    className={`text-xs font-medium transition-colors ${
+                      isFree ? "text-emerald-400" : "text-slate-500"
+                    }`}
+                  >
+                    Free / Trial
+                  </span>
+                  <div
+                    className={`w-9 h-5 rounded-full p-1 transition-colors ${
+                      isFree ? "bg-emerald-500" : "bg-slate-700"
+                    }`}
+                  >
+                    <div
+                      className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${
+                        isFree ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative">
+                <span
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 ${
+                    isFree ? "text-slate-600" : "text-slate-500"
+                  }`}
+                >
+                  $
+                </span>
                 <input
                   type="number"
                   step="0.01"
@@ -194,40 +360,24 @@ export default function AddSubscriptionModal({
                   name="cost"
                   value={formData.cost || ""}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                  placeholder="9.99"
-                  required
+                  disabled={isFree}
+                  className={`${inputClass} pl-8 ${
+                    isFree ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  placeholder="0.00"
+                  required={!isFree}
                 />
-              </div>
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Currency
-                </label>
-                <select
-                  name="currency"
-                  value={formData.currency}
-                  onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                >
-                  {CURRENCIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Cycle
-                </label>
+                <label className={labelClass}>Cycle</label>
                 <select
                   name="cycle"
                   value={formData.cycle}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className={inputClass}
                 >
                   {CYCLES.map((c) => (
                     <option key={c} value={c}>
@@ -237,14 +387,12 @@ export default function AddSubscriptionModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Remind Me
-                </label>
+                <label className={labelClass}>Remind Me</label>
                 <select
                   name="reminderDays"
                   value={formData.reminderDays}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className={inputClass}
                 >
                   <option value="1">1 day before</option>
                   <option value="3">3 days before</option>
@@ -255,28 +403,24 @@ export default function AddSubscriptionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Next Bill Date
-              </label>
+              <label className={labelClass}>Next Bill Date</label>
               <input
                 type="date"
                 name="nextBillDate"
                 value={formData.nextBillDate}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={`${inputClass} [color-scheme:dark]`}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Category
-              </label>
+              <label className={labelClass}>Category</label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={inputClass}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
@@ -287,45 +431,57 @@ export default function AddSubscriptionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Management URL (Optional)
-              </label>
+              <label className={labelClass}>Management URL (Optional)</label>
               <input
                 type="url"
                 name="managementUrl"
                 value={formData.managementUrl}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={inputClass}
                 placeholder="https://netflix.com/account"
               />
             </div>
-          </div>
+          </form>
+        </div>
 
-          {/* Footer */}
-          <div className="flex justify-end p-4 bg-gray-50 border-t rounded-b-xl">
-            <button
-              type="button"
-              onClick={onClose}
-              className="mr-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-400"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? initialData
-                  ? "Updating..."
-                  : "Saving..."
-                : initialData
-                ? "Update Subscription"
-                : "Save Subscription"}
-            </button>
-          </div>
-        </form>
+        {/* Fixed Footer */}
+        <div className="p-5 border-t border-slate-800 bg-slate-900 shrink-0 z-10 flex flex-col gap-3">
+          <button
+            form="subForm"
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98]"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? initialData
+                ? "Updating..."
+                : "Saving..."
+              : initialData
+              ? "Update Subscription"
+              : "Save Subscription"}
+          </button>
+
+          {initialData && (
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmAction("extend")}
+                className="py-3 bg-emerald-600/10 border border-emerald-600/20 text-emerald-400 hover:bg-emerald-600/20 font-semibold rounded-xl transition-all active:scale-[0.98] text-sm"
+                disabled={isSubmitting}
+              >
+                Extend
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmAction("delete")}
+                className="py-3 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 font-semibold rounded-xl transition-all active:scale-[0.98] text-sm"
+                disabled={isSubmitting}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

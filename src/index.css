@@ -1,21 +1,23 @@
-/* Import the Inter font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-/* This one line replaces all the old @tailwind directives.
-  It's the new way in Tailwind v4.
-*/
+/* src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
-/* Our custom body styles.
-  This will now work because @import "tailwindcss"
-  has defined what "bg-gray-100" means.
-*/
 @layer base {
   body {
-    @apply bg-gray-100 text-gray-900 antialiased;
+    /* The snippet uses slate-950 for that deep, premium dark look */
+    @apply bg-slate-950 text-slate-100 antialiased selection:bg-blue-500 selection:text-white;
   }
 }
 
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Hide scrollbar for horizontal scrolling areas if needed */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

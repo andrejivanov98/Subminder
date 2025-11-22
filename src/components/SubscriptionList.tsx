@@ -1,38 +1,46 @@
-import type { Subscription } from '../types';
-import SubscriptionItem from './SubscriptionItem';
+// src/components/SubscriptionList.tsx
+import type { Subscription } from "../types";
+import SubscriptionItem from "./SubscriptionItem";
 
 interface SubscriptionListProps {
   subscriptions: Subscription[];
   userId: string;
-  onEdit: (sub: Subscription) => void; // NEW PROP
+  onEdit: (sub: Subscription) => void;
 }
 
-export default function SubscriptionList({ subscriptions, userId, onEdit }: SubscriptionListProps) {
+export default function SubscriptionList({
+  subscriptions,
+  userId,
+  onEdit,
+}: SubscriptionListProps) {
   const sortedSubs = [...subscriptions].sort(
-    (a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime()
+    (a, b) =>
+      new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime()
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold text-gray-900 p-4 border-b border-gray-200">
-        Your Subscriptions ({subscriptions.length})
-      </h2>
-      <div className="divide-y divide-gray-200">
-        {sortedSubs.length > 0 ? (
-          sortedSubs.map((sub) => (
-            <SubscriptionItem 
-              key={sub.id} 
-              subscription={sub} 
-              userId={userId} 
-              onEdit={onEdit} // Pass down
-            />
-          ))
-        ) : (
-          <p className="p-4 text-center text-gray-500">
-            No subscriptions yet. Add your first one!
-          </p>
-        )}
+    <div className="space-y-4 mt-6">
+      <div className="flex items-center justify-between px-2 mb-2">
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+          Upcoming
+        </h2>
       </div>
+
+      {sortedSubs.length === 0 ? (
+        <div className="text-center py-20 opacity-50">
+          <p className="text-slate-400">No subscriptions yet.</p>
+          <p className="text-sm text-slate-600">Tap + to add one.</p>
+        </div>
+      ) : (
+        sortedSubs.map((sub) => (
+          <SubscriptionItem
+            key={sub.id}
+            subscription={sub}
+            userId={userId}
+            onEdit={onEdit}
+          />
+        ))
+      )}
     </div>
   );
 }

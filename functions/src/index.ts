@@ -1,8 +1,8 @@
+// functions/src/index.ts
 import { logger } from "firebase-functions";
 import { pubsub } from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 
-// Initialize the Firebase Admin SDK
 admin.initializeApp();
 
 const db = admin.firestore();
@@ -17,10 +17,8 @@ export const scheduledReminderCheck = pubsub
     const runTime = new Date(context.timestamp);
     logger.info(`Function run time (Skopje): ${runTime.toISOString()}`);
 
-    // The supported reminder intervals (must match frontend options)
     const REMINDER_OFFSETS = [1, 3, 7, 14];
 
-    // Helper function to query for a specific day offset
     const queryForOffset = async (days: number) => {
       const targetDate = new Date(runTime);
       targetDate.setDate(runTime.getDate() + days);
@@ -35,7 +33,6 @@ export const scheduledReminderCheck = pubsub
         `Checking for subs due on ${start.toISOString()} (Remind: ${days} days before)`
       );
 
-      // NOTE: This query might require a new index on [nextBillDate, reminderDays]
       return db
         .collectionGroup("subscriptions")
         .where("nextBillDate", ">=", start)
@@ -44,7 +41,6 @@ export const scheduledReminderCheck = pubsub
         .get();
     };
 
-    // Run all queries in parallel
     let allSnapshots;
     try {
       allSnapshots = await Promise.all(
@@ -60,7 +56,6 @@ export const scheduledReminderCheck = pubsub
       return null;
     }
 
-    // Combine all found documents into one array
     const allDocs = allSnapshots.flatMap((snapshot) => snapshot.docs);
 
     if (allDocs.length === 0) {
@@ -74,20 +69,12 @@ export const scheduledReminderCheck = pubsub
       `SUCCESS: Found ${allDocs.length} total subscriptions to remind.`
     );
 
-    // --- Process each subscription ---
     for (const subDoc of allDocs) {
       const subData = subDoc.data();
       const daysBefore = subData.reminderDays || 3;
-      const currency = subData.currency || "USD"; // Default to USD
 
-      // Simple map for backend currency symbols
-      const symbols: { [key: string]: string } = {
-        USD: "$",
-        EUR: "€",
-        MKD: "den",
-        GBP: "£",
-      };
-      const symbol = symbols[currency] || "$";
+      // Removed currency logic, default to $
+      const symbol = "$";
 
       logger.info(
         `Processing subscription: ${subDoc.id} (${subData.serviceName})`
@@ -101,7 +88,6 @@ export const scheduledReminderCheck = pubsub
         continue;
       }
 
-      // Get tokens
       const tokensSnapshot = await db
         .collection("users")
         .doc(userId)
@@ -117,14 +103,12 @@ export const scheduledReminderCheck = pubsub
         (tokenDoc) => tokenDoc.data().token
       );
 
-      // Construct message with correct symbol
       const bodyText = `Your ${
         subData.serviceName
       } subscription for ${symbol}${subData.cost.toFixed(
         2
       )} is due in ${daysBefore} days.`;
 
-      // Save to Firestore for Notification Center
       try {
         await db
           .collection("users")
@@ -140,7 +124,6 @@ export const scheduledReminderCheck = pubsub
         logger.error(`Error saving notification to Firestore:`, error);
       }
 
-      // Send Push Notification
       const payload: admin.messaging.MulticastMessage = {
         notification: {
           title: "Upcoming Subscription Charge!",

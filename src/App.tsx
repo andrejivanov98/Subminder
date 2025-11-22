@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useState, useEffect, useMemo } from "react";
 import {
   auth,
@@ -15,7 +16,7 @@ import {
   type User,
 } from "firebase/auth";
 import { onMessage } from "firebase/messaging";
-import { BarChart2 } from "lucide-react";
+import { Loader2 } from "lucide-react"; // Changed icon for loading
 
 import Dashboard from "./components/Dashboard";
 import Insights from "./components/Insights";
@@ -61,7 +62,6 @@ function App() {
   useEffect(() => {
     if (!user) return;
 
-    // 1. Subscriptions Listener
     const subUnsub = onSnapshot(
       query(collection(db, "users", user.uid, "subscriptions")),
       (snapshot) => {
@@ -84,7 +84,6 @@ function App() {
       (error) => console.error("Error fetching subs:", error)
     );
 
-    // 2. Notifications Listener
     const notifUnsub = onSnapshot(
       query(collection(db, "users", user.uid, "notifications")),
       (snapshot) => {
@@ -120,13 +119,11 @@ function App() {
       if (payload.notification) {
         const { title, body } = payload.notification;
 
-        // Show Toast
         setToastNotification({
           title: title || "New Message",
           body: body || "",
         });
 
-        // Save to Firestore
         try {
           await addDoc(collection(db, "users", user.uid, "notifications"), {
             title: title,
@@ -143,7 +140,6 @@ function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // Calculate unread count
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
     [notifications]
@@ -155,24 +151,15 @@ function App() {
     (isLoadingData && !subscriptions.length && !notifications.length)
   ) {
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-        <BarChart2 className="w-12 h-12 text-indigo-600 animate-pulse" />
-        <p className="text-gray-600 font-medium mt-4">
-          Loading Your SubMinder...
-        </p>
-        {isLoadingAuth && (
-          <p className="text-sm text-gray-500">Authenticating...</p>
-        )}
-        {isLoadingData && !isLoadingAuth && (
-          <p className="text-sm text-gray-500">Syncing data...</p>
-        )}
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+        <p className="text-slate-400 font-medium">Loading SubMinder...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative bg-gray-100">
-      {/* Toast */}
+    <div className="min-h-screen relative bg-slate-950 text-slate-100 font-sans">
       {toastNotification && (
         <Toast
           title={toastNotification.title}
@@ -181,12 +168,13 @@ function App() {
         />
       )}
 
-      <main className="pb-20">
+      {/* Added padding bottom to avoid content hiding behind navbar */}
+      <main className="pb-28">
         {view === "dashboard" && (
           <Dashboard
             userId={user?.uid}
             subscriptions={subscriptions}
-            user={user} // <-- Passed the full user object
+            user={user}
           />
         )}
         {view === "insights" && (

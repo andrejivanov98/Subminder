@@ -1,14 +1,14 @@
 // src/types.ts
-export type SubscriptionCycle = 'weekly' | 'monthly' | 'yearly';
+export type SubscriptionCycle = "weekly" | "monthly" | "yearly";
 
-export type SubscriptionCategory = 
-  | 'Entertainment' 
-  | 'Work' 
-  | 'Health' 
-  | 'Utility' 
-  | 'Other';
+export type SubscriptionCategory =
+  | "Entertainment"
+  | "Work"
+  | "Health"
+  | "Utility"
+  | "Other";
 
-  export type Currency = 'USD' | 'EUR' | 'MKD' | 'GBP';
+export type Currency = "USD";
 
 export interface Subscription {
   id: string;
@@ -31,4 +31,4 @@ export interface AppNotification {
 }
 
 // This will be the type for our "Add New" form
-export type SubscriptionFormData = Omit<Subscription, 'id'>;
+export type SubscriptionFormData = Omit<Subscription, "id">;
