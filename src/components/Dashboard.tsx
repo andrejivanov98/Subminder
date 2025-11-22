@@ -1,3 +1,4 @@
+// src/components/Dashboard.tsx
 import { useState, useMemo } from "react";
 import { Plus, Link as LinkIcon } from "lucide-react";
 import type { Subscription, Currency } from "../types";
@@ -17,7 +18,6 @@ const getTodayDate = () => {
     .split("T")[0];
 };
 
-// Map for symbols
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
   USD: "$",
   EUR: "€",
@@ -76,11 +76,10 @@ export default function Dashboard({
   };
 
   const { totalMonthlyDisplay, upcomingBill } = useMemo(() => {
-    // --- 1. Calculate Totals Grouped by Currency ---
     const totalsByCurrency: Record<string, number> = {};
 
     subscriptions.forEach((sub) => {
-      const curr = sub.currency || "USD"; // Default to USD
+      const curr = sub.currency || "USD";
       if (!totalsByCurrency[curr]) totalsByCurrency[curr] = 0;
 
       if (sub.cycle === "monthly") totalsByCurrency[curr] += sub.cost;
@@ -88,7 +87,6 @@ export default function Dashboard({
       else if (sub.cycle === "weekly") totalsByCurrency[curr] += sub.cost * 4;
     });
 
-    // Format the display string: "$15.00 + €10.00"
     const totalString = Object.entries(totalsByCurrency)
       .map(([curr, amount]) => {
         const symbol = CURRENCY_SYMBOLS[curr as Currency] || "$";
@@ -96,7 +94,6 @@ export default function Dashboard({
       })
       .join(" + ");
 
-    // --- 2. Upcoming Bill ---
     let upcoming: Subscription | null = null;
     if (subscriptions.length > 0) {
       const today = new Date(getTodayDate());
@@ -133,7 +130,7 @@ export default function Dashboard({
       : "";
 
     return {
-      totalMonthlyDisplay: totalString || "$0.00", // Default if empty
+      totalMonthlyDisplay: totalString || "$0.00",
       upcomingBill: {
         name: upcoming?.serviceName || "N/A",
         days: upcoming ? (daysLeft < 0 ? "Overdue" : `${daysLeft} days`) : "-",
@@ -147,25 +144,27 @@ export default function Dashboard({
   if (!userId) {
     return (
       <div className="p-4 max-w-2xl mx-auto text-center">
-        <p className="text-gray-500">Authenticating...</p>
+        <p className="text-zinc-500">Authenticating...</p>
       </div>
     );
   }
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8 mt-2">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Dashboard
+          </h1>
           {user?.isAnonymous ? (
-            <p className="text-gray-600 text-sm flex items-center gap-1">
+            <p className="text-zinc-400 text-sm flex items-center gap-2 mt-1">
               Guest Mode
-              <span className="bg-gray-200 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full">
+              <span className="bg-zinc-800 text-zinc-300 text-[10px] px-2 py-0.5 rounded-full border border-zinc-700">
                 {userId.substring(0, 4)}
               </span>
             </p>
           ) : (
-            <p className="text-gray-600 text-sm">
+            <p className="text-zinc-400 text-sm mt-1">
               {user?.displayName
                 ? `Welcome back, ${user.displayName}`
                 : "Welcome back"}
@@ -176,9 +175,9 @@ export default function Dashboard({
         {user?.isAnonymous && (
           <button
             onClick={handleLinkAccount}
-            className="flex items-center text-xs font-medium text-indigo-600 bg-indigo-50 px-3 py-2 rounded-full hover:bg-indigo-100 transition-colors"
+            className="flex items-center text-xs font-medium text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full hover:bg-indigo-500/20 transition-colors"
           >
-            <LinkIcon size={14} className="mr-1.5" />
+            <LinkIcon size={12} className="mr-1.5" />
             Link Google
           </button>
         )}
@@ -186,10 +185,10 @@ export default function Dashboard({
 
       <NotificationPrompt userId={userId} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <SummaryCard
           title="Total Monthly"
-          value={totalMonthlyDisplay} // Use the formatted string
+          value={totalMonthlyDisplay}
           subtitle="Estimate"
         />
         <SummaryCard
@@ -207,9 +206,9 @@ export default function Dashboard({
 
       <button
         onClick={handleAddClick}
-        className="fixed bottom-20 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 z-40"
+        className="fixed bottom-24 right-6 bg-indigo-600 text-white p-3.5 rounded-full shadow-xl shadow-indigo-900/30 hover:bg-indigo-500 hover:scale-105 transition-all duration-300 z-40"
       >
-        <Plus size={24} />
+        <Plus size={28} />
       </button>
 
       <AddSubscriptionModal

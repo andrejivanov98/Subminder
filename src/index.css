@@ -1,18 +1,11 @@
-/* Import the Inter font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-/* This one line replaces all the old @tailwind directives.
-  It's the new way in Tailwind v4.
-*/
+/* src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
-/* Our custom body styles.
-  This will now work because @import "tailwindcss"
-  has defined what "bg-gray-100" means.
-*/
 @layer base {
   body {
-    @apply bg-gray-100 text-gray-900 antialiased;
+    /* Dark Theme Baseline */
+    @apply bg-zinc-950 text-zinc-100 antialiased selection:bg-indigo-500/30;
   }
 }
 

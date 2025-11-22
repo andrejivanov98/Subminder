@@ -20,7 +20,6 @@ export default function NotificationPrompt({
 }: NotificationPromptProps) {
   const [permission, setPermission] = useState(Notification.permission);
 
-  // This function requests permission, gets the token, and saves it
   const requestPermissionAndGetToken = async () => {
     if ("Notification" in window) {
       try {
@@ -29,23 +28,13 @@ export default function NotificationPrompt({
 
         if (currentPermission === "granted") {
           console.log("Notification permission granted.");
-
-          // Get the token
           const currentToken = await getToken(messaging, {
             vapidKey: VAPID_KEY,
           });
 
           if (currentToken) {
-            console.log("FCM Token:", currentToken);
-            // Save this token to Firestore
             await saveTokenToFirestore(userId, currentToken);
-          } else {
-            console.log(
-              "No registration token available. Request permission to generate one."
-            );
           }
-        } else {
-          console.log("Unable to get permission to notify.");
         }
       } catch (error) {
         console.error("An error occurred while retrieving token. ", error);
@@ -53,23 +42,18 @@ export default function NotificationPrompt({
     }
   };
 
-  // Saves the token to a user's subcollection
   const saveTokenToFirestore = async (userId: string, token: string) => {
     try {
-      // We use the token itself as the document ID to prevent duplicates
       const tokenRef = doc(db, "users", userId, "tokens", token);
       await setDoc(tokenRef, {
         token: token,
-        createdAt: serverTimestamp(), // Know when it was added
+        createdAt: serverTimestamp(),
       });
-      console.log("Token saved to Firestore.");
     } catch (error) {
       console.error("Error saving token to Firestore: ", error);
     }
   };
 
-  // This effect runs on load to check if permission is *already* granted
-  // and syncs the token just in case.
   useEffect(() => {
     const syncToken = async () => {
       if (Notification.permission === "granted" && userId) {
@@ -86,44 +70,43 @@ export default function NotificationPrompt({
       }
     };
     syncToken();
-  }, [userId]); // Runs when userId is available
+  }, [userId]);
 
-  // If permission is already granted, don't show anything.
-  // We'll just sync the token in the background (see useEffect).
   if (permission === "granted") {
     return null;
   }
 
-  // If permission is denied, show a "please enable" message
   if (permission === "denied") {
     return (
-      <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow-sm mb-6">
-        <p className="font-bold">Notifications Blocked</p>
-        <p className="text-sm">
-          To get reminders, please enable notifications in your browser
-          settings.
-        </p>
+      <div className="bg-amber-900/20 border border-amber-900/50 text-amber-200 p-4 rounded-xl mb-6 flex items-start gap-3">
+        <div className="mt-0.5">⚠️</div>
+        <div>
+          <p className="font-semibold text-sm">Notifications Blocked</p>
+          <p className="text-xs opacity-80 mt-1">
+            Please enable notifications in your browser settings to receive
+            reminders.
+          </p>
+        </div>
       </div>
     );
   }
 
-  // If permission is "default" (not yet asked), show the prompt button.
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex items-center justify-between">
+    <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-sm mb-6 flex items-center justify-between">
       <div className="flex items-center">
-        <div className="bg-indigo-100 p-2 rounded-full mr-3">
-          <Bell className="text-indigo-600" size={20} />
+        <div className="bg-indigo-500/10 p-2 rounded-full mr-3">
+          <Bell className="text-indigo-400" size={20} />
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900">Get Reminders!</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="font-semibold text-zinc-100 text-sm">Get Reminders</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
             Enable push notifications to get alerts.
           </p>
         </div>
       </div>
       <button
         onClick={requestPermissionAndGetToken}
-        className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+        className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-indigo-500 transition-colors"
       >
         Enable
       </button>

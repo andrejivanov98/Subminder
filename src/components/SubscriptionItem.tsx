@@ -1,6 +1,7 @@
-import { ExternalLink, Trash2, Pencil } from 'lucide-react'; 
-import type { Subscription, Currency } from '../types';
-import { db, doc, deleteDoc } from '../firebase';
+// src/components/SubscriptionItem.tsx
+import { ExternalLink, Trash2, Pencil } from "lucide-react";
+import type { Subscription, Currency } from "../types";
+import { db, doc, deleteDoc } from "../firebase";
 
 const getDaysLeftInfo = (dateString: string) => {
   const now = new Date();
@@ -12,19 +13,20 @@ const getDaysLeftInfo = (dateString: string) => {
     (nextBillDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  if (daysLeft < 0) return { text: 'Overdue', color: 'text-red-600' };
-  if (daysLeft === 0) return { text: 'Today', color: 'text-red-600' };
-  if (daysLeft <= 3) return { text: `in ${daysLeft} days`, color: 'text-red-500' };
-  if (daysLeft <= 7) return { text: `in ${daysLeft} days`, color: 'text-yellow-600' };
-  return { text: `in ${daysLeft} days`, color: 'text-green-600' };
+  if (daysLeft < 0) return { text: "Overdue", color: "text-red-400" };
+  if (daysLeft === 0) return { text: "Today", color: "text-red-400" };
+  if (daysLeft <= 3)
+    return { text: `in ${daysLeft} days`, color: "text-red-400" };
+  if (daysLeft <= 7)
+    return { text: `in ${daysLeft} days`, color: "text-yellow-500" };
+  return { text: `in ${daysLeft} days`, color: "text-emerald-400" };
 };
 
-// --- NEW: Currency Map ---
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
-    USD: '$',
-    EUR: '€',
-    MKD: 'den',
-    GBP: '£'
+  USD: "$",
+  EUR: "€",
+  MKD: "den",
+  GBP: "£",
 };
 
 interface SubscriptionItemProps {
@@ -33,17 +35,28 @@ interface SubscriptionItemProps {
   onEdit: (sub: Subscription) => void;
 }
 
-export default function SubscriptionItem({ subscription, userId, onEdit }: SubscriptionItemProps) {
-  const { serviceName, cost, currency, cycle, nextBillDate, managementUrl, id } = subscription;
+export default function SubscriptionItem({
+  subscription,
+  userId,
+  onEdit,
+}: SubscriptionItemProps) {
+  const {
+    serviceName,
+    cost,
+    currency,
+    cycle,
+    nextBillDate,
+    managementUrl,
+    id,
+  } = subscription;
   const daysLeftInfo = getDaysLeftInfo(nextBillDate);
 
-  // Default to USD if currency is missing (legacy data)
-  const symbol = CURRENCY_SYMBOLS[currency] || '$';
+  const symbol = CURRENCY_SYMBOLS[currency] || "$";
 
-  const cycleText: Record<Subscription['cycle'], string> = {
-    monthly: '/mo',
-    yearly: '/yr',
-    weekly: '/wk',
+  const cycleText: Record<Subscription["cycle"], string> = {
+    monthly: "/mo",
+    yearly: "/yr",
+    weekly: "/wk",
   };
 
   const handleDelete = async () => {
@@ -51,7 +64,7 @@ export default function SubscriptionItem({ subscription, userId, onEdit }: Subsc
       return;
     }
     try {
-      const docRef = doc(db, 'users', userId, 'subscriptions', id);
+      const docRef = doc(db, "users", userId, "subscriptions", id);
       await deleteDoc(docRef);
     } catch (error) {
       console.error("Error deleting subscription:", error);
@@ -60,43 +73,53 @@ export default function SubscriptionItem({ subscription, userId, onEdit }: Subsc
   };
 
   return (
-    <div 
-      className="flex items-center p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+    <div
+      className="flex items-center p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
       onClick={() => onEdit(subscription)}
     >
-      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-4">
-        <span className="text-lg font-medium text-indigo-600">
+      {/* Icon Circle */}
+      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center mr-4">
+        <span className="text-lg font-bold text-indigo-400">
           {serviceName.charAt(0).toUpperCase()}
         </span>
       </div>
 
+      {/* Info */}
       <div className="flex-grow min-w-0">
-        <p className="text-md font-semibold text-gray-900 truncate">{serviceName}</p>
-        <p className="text-sm text-gray-600">
-          {/* UPDATED PRICE DISPLAY */}
-          {symbol}{cost.toFixed(2)} <span className="text-gray-400">{cycleText[cycle]}</span>
+        <p className="text-sm font-semibold text-zinc-100 truncate">
+          {serviceName}
+        </p>
+        <p className="text-xs text-zinc-400 mt-0.5">
+          {symbol}
+          {cost.toFixed(2)}{" "}
+          <span className="text-zinc-600">{cycleText[cycle]}</span>
         </p>
       </div>
 
+      {/* Date Info (Desktop) */}
       <div className="text-right flex-shrink-0 ml-4 hidden sm:block">
-        <p className="text-md font-semibold text-gray-900">
-          {new Date(nextBillDate).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
+        <p className="text-sm font-medium text-zinc-300">
+          {new Date(nextBillDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
           })}
         </p>
-        <p className={`text-sm font-medium ${daysLeftInfo.color}`}>
+        <p className={`text-xs font-medium ${daysLeftInfo.color}`}>
           {daysLeftInfo.text}
         </p>
       </div>
 
-      <div className="flex flex-row ml-2 sm:ml-4 items-center">
+      {/* Actions */}
+      <div className="flex flex-row ml-2 sm:ml-4 items-center gap-1">
         <button
-            onClick={(e) => { e.stopPropagation(); onEdit(subscription); }}
-            className="text-gray-400 hover:text-indigo-600 p-2"
-            aria-label="Edit Subscription"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(subscription);
+          }}
+          className="text-zinc-500 hover:text-indigo-400 p-2 rounded-full hover:bg-zinc-800 transition-colors"
+          aria-label="Edit Subscription"
         >
-            <Pencil size={18} />
+          <Pencil size={16} />
         </button>
 
         {managementUrl && (
@@ -104,19 +127,22 @@ export default function SubscriptionItem({ subscription, userId, onEdit }: Subsc
             href={managementUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-400 hover:text-indigo-600 p-2 hidden sm:block"
+            className="text-zinc-500 hover:text-indigo-400 p-2 rounded-full hover:bg-zinc-800 transition-colors hidden sm:block"
             onClick={(e) => e.stopPropagation()}
             aria-label="Manage Subscription"
           >
-            <ExternalLink size={18} />
+            <ExternalLink size={16} />
           </a>
         )}
         <button
-          onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-          className="text-gray-400 hover:text-red-600 p-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete();
+          }}
+          className="text-zinc-500 hover:text-red-400 p-2 rounded-full hover:bg-zinc-800 transition-colors"
           aria-label="Delete Subscription"
         >
-          <Trash2 size={18} />
+          <Trash2 size={16} />
         </button>
       </div>
     </div>

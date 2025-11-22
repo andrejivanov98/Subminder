@@ -1,3 +1,4 @@
+// src/components/AddSubscriptionModal.tsx
 import { useState, useEffect, type FormEvent } from "react";
 import { X } from "lucide-react";
 import type {
@@ -5,7 +6,7 @@ import type {
   SubscriptionCycle,
   SubscriptionCategory,
   Subscription,
-  Currency, // Import Currency
+  Currency,
 } from "../types";
 import { db, collection, addDoc, doc, updateDoc, Timestamp } from "../firebase";
 
@@ -26,7 +27,7 @@ const CATEGORIES: SubscriptionCategory[] = [
   "Other",
 ];
 const CYCLES: SubscriptionCycle[] = ["monthly", "yearly", "weekly"];
-const CURRENCIES: Currency[] = ["USD", "EUR", "MKD", "GBP"]; // Available options
+const CURRENCIES: Currency[] = ["USD", "EUR", "MKD", "GBP"];
 
 export default function AddSubscriptionModal({
   isOpen,
@@ -37,7 +38,7 @@ export default function AddSubscriptionModal({
   const [formData, setFormData] = useState<SubscriptionFormData>({
     serviceName: "",
     cost: 0,
-    currency: "EUR", // Default currency
+    currency: "EUR",
     nextBillDate: getTodayDate(),
     cycle: "monthly",
     category: "Entertainment",
@@ -46,15 +47,13 @@ export default function AddSubscriptionModal({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- EFFECT: Pre-fill form if editing ---
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        // Edit Mode: Populate fields
         setFormData({
           serviceName: initialData.serviceName,
           cost: initialData.cost,
-          currency: initialData.currency || "EUR", // Handle legacy data
+          currency: initialData.currency || "EUR",
           nextBillDate: initialData.nextBillDate,
           cycle: initialData.cycle,
           category: initialData.category,
@@ -62,11 +61,10 @@ export default function AddSubscriptionModal({
           reminderDays: initialData.reminderDays || 3,
         });
       } else {
-        // Add Mode: Reset to default
         setFormData({
           serviceName: "",
           cost: 0,
-          currency: "EUR", // Default
+          currency: "EUR",
           nextBillDate: getTodayDate(),
           cycle: "monthly",
           category: "Entertainment",
@@ -79,7 +77,6 @@ export default function AddSubscriptionModal({
 
   if (!isOpen) return null;
 
-  // --- SUBMIT HANDLER ---
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!formData.serviceName || formData.cost <= 0 || !formData.nextBillDate) {
@@ -90,7 +87,6 @@ export default function AddSubscriptionModal({
     setIsSubmitting(true);
 
     try {
-      // Timezone Fix
       const dateString = formData.nextBillDate;
       const parts = dateString.split("-").map((p) => parseInt(p, 10));
       const utcDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
@@ -98,11 +94,9 @@ export default function AddSubscriptionModal({
       const dataToSave = {
         ...formData,
         nextBillDate: Timestamp.fromDate(utcDate),
-        // reminderDays and currency are already in ...formData
       };
 
       if (initialData) {
-        // --- UPDATE EXISTING ---
         const subRef = doc(
           db,
           "users",
@@ -111,12 +105,9 @@ export default function AddSubscriptionModal({
           initialData.id
         );
         await updateDoc(subRef, dataToSave);
-        console.log("Subscription updated!");
       } else {
-        // --- CREATE NEW ---
         const subsCollection = collection(db, "users", userId, "subscriptions");
         await addDoc(subsCollection, dataToSave);
-        console.log("Subscription added!");
       }
 
       onClose();
@@ -134,59 +125,57 @@ export default function AddSubscriptionModal({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      // Parse numbers for cost AND reminderDays
       [name]:
         name === "cost" || name === "reminderDays" ? parseFloat(value) : value,
     }));
   };
 
+  // Reusable input classes
+  const inputClass =
+    "mt-1 block w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all";
+  const labelClass =
+    "block text-xs font-medium text-zinc-400 uppercase tracking-wide";
+
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col"
+        className="bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex justify-between items-center p-4 border-b">
-            <h2 className="text-xl font-semibold">
+          <div className="flex justify-between items-center p-5 border-b border-zinc-800">
+            <h2 className="text-lg font-semibold text-white">
               {initialData ? "Edit Subscription" : "Add Subscription"}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2"
+              className="text-zinc-400 hover:text-white p-1 rounded-full hover:bg-zinc-800 transition-colors"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
           </div>
 
-          {/* Body */}
-          <div className="p-6 space-y-4 overflow-y-auto">
+          <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Service Name
-              </label>
+              <label className={labelClass}>Service Name</label>
               <input
                 type="text"
                 name="serviceName"
                 value={formData.serviceName}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={inputClass}
                 placeholder="e.g., Netflix"
                 required
               />
             </div>
 
-            {/* --- UPDATED COST SECTION WITH CURRENCY --- */}
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Cost
-                </label>
+                <label className={labelClass}>Cost</label>
                 <input
                   type="number"
                   step="0.01"
@@ -194,20 +183,18 @@ export default function AddSubscriptionModal({
                   name="cost"
                   value={formData.cost || ""}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className={inputClass}
                   placeholder="9.99"
                   required
                 />
               </div>
               <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Currency
-                </label>
+                <label className={labelClass}>Currency</label>
                 <select
                   name="currency"
                   value={formData.currency}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className={inputClass}
                 >
                   {CURRENCIES.map((c) => (
                     <option key={c} value={c}>
@@ -220,14 +207,12 @@ export default function AddSubscriptionModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Cycle
-                </label>
+                <label className={labelClass}>Cycle</label>
                 <select
                   name="cycle"
                   value={formData.cycle}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className={inputClass}
                 >
                   {CYCLES.map((c) => (
                     <option key={c} value={c}>
@@ -237,14 +222,12 @@ export default function AddSubscriptionModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Remind Me
-                </label>
+                <label className={labelClass}>Remind Me</label>
                 <select
                   name="reminderDays"
                   value={formData.reminderDays}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  className={inputClass}
                 >
                   <option value="1">1 day before</option>
                   <option value="3">3 days before</option>
@@ -255,28 +238,24 @@ export default function AddSubscriptionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Next Bill Date
-              </label>
+              <label className={labelClass}>Next Bill Date</label>
               <input
                 type="date"
                 name="nextBillDate"
                 value={formData.nextBillDate}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={`${inputClass} [color-scheme:dark]`}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Category
-              </label>
+              <label className={labelClass}>Category</label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={inputClass}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
@@ -287,33 +266,30 @@ export default function AddSubscriptionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Management URL (Optional)
-              </label>
+              <label className={labelClass}>Management URL (Optional)</label>
               <input
                 type="url"
                 name="managementUrl"
                 value={formData.managementUrl}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                className={inputClass}
                 placeholder="https://netflix.com/account"
               />
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex justify-end p-4 bg-gray-50 border-t rounded-b-xl">
+          <div className="flex justify-end p-5 bg-zinc-900 border-t border-zinc-800">
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="mr-3 px-4 py-2 bg-transparent border border-zinc-700 rounded-lg text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-400"
+              className="px-6 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:bg-indigo-500/50 transition-all shadow-lg shadow-indigo-900/20"
               disabled={isSubmitting}
             >
               {isSubmitting
@@ -321,8 +297,8 @@ export default function AddSubscriptionModal({
                   ? "Updating..."
                   : "Saving..."
                 : initialData
-                ? "Update Subscription"
-                : "Save Subscription"}
+                ? "Update"
+                : "Save"}
             </button>
           </div>
         </form>

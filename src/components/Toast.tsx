@@ -9,7 +9,6 @@ interface ToastProps {
 }
 
 export default function Toast({ title, body, onClose }: ToastProps) {
-  // Automatically close after 5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
@@ -18,21 +17,21 @@ export default function Toast({ title, body, onClose }: ToastProps) {
   }, [onClose]);
 
   return (
-    <div className="fixed top-4 right-4 z-50 w-full max-w-sm bg-white rounded-lg shadow-lg border-l-4 border-indigo-600 p-4 animate-in slide-in-from-right">
+    <div className="fixed top-4 right-4 z-[60] w-full max-w-sm bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl shadow-2xl p-4 animate-in slide-in-from-top-2">
       <div className="flex items-start">
         <div className="flex-shrink-0 pt-0.5">
-          <Bell className="h-6 w-6 text-indigo-600" />
+          <Bell className="h-5 w-5 text-indigo-500" />
         </div>
         <div className="ml-3 w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900">{title}</p>
-          <p className="mt-1 text-sm text-gray-500">{body}</p>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 text-xs text-zinc-400">{body}</p>
         </div>
         <div className="ml-4 flex-shrink-0 flex">
           <button
-            className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
+            className="bg-transparent rounded-md inline-flex text-zinc-500 hover:text-white focus:outline-none"
             onClick={onClose}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>

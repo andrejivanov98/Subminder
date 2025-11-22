@@ -1,3 +1,4 @@
+// src/components/NotificationCenter.tsx
 import { Bell, Check, Trash2 } from "lucide-react";
 import type { AppNotification } from "../types";
 import { db, doc, deleteDoc, updateDoc } from "../firebase";
@@ -13,7 +14,6 @@ export default function NotificationCenter({
   notifications,
   onClose,
 }: NotificationCenterProps) {
-  // Sort by date (newest first)
   const sortedNotifications = [...notifications].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -45,75 +45,84 @@ export default function NotificationCenter({
 
   return (
     <div className="p-4 max-w-2xl mx-auto pb-24">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+      <div className="flex items-center justify-between mb-8 mt-2">
+        <h1 className="text-2xl font-bold text-white">Notifications</h1>
         <button
           onClick={onClose}
-          className="text-indigo-600 font-medium text-sm"
+          className="text-indigo-400 hover:text-indigo-300 font-medium text-sm"
         >
-          Close
+          Back
         </button>
       </div>
 
       {sortedNotifications.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-          <div className="bg-indigo-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Bell className="text-indigo-400" size={24} />
+        <div className="text-center py-16 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 border-dashed">
+          <div className="bg-zinc-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Bell className="text-zinc-500" size={20} />
           </div>
-          <p className="text-gray-500">No notifications yet.</p>
+          <p className="text-zinc-500 font-medium">No notifications yet</p>
         </div>
       ) : (
         <div className="space-y-3">
           {sortedNotifications.map((notif) => (
             <div
               key={notif.id}
-              className={`bg-white p-4 rounded-lg shadow-sm border-l-4 transition-all cursor-pointer ${
-                notif.read ? "border-gray-200 opacity-75" : "border-indigo-500"
+              className={`relative p-4 rounded-xl border transition-all ${
+                notif.read
+                  ? "bg-zinc-900/30 border-zinc-800/50 opacity-60"
+                  : "bg-zinc-900 border-zinc-700 shadow-sm"
               }`}
               onClick={() => handleMarkAsRead(notif)}
             >
-              <div className="flex justify-between items-start">
+              {/* Unread Indicator Dot */}
+              {!notif.read && (
+                <div className="absolute top-4 right-4 w-2 h-2 bg-indigo-500 rounded-full" />
+              )}
+
+              <div className="flex justify-between items-start pr-6">
                 <div className="flex-1">
                   <h3
-                    className={`font-semibold text-gray-900 ${
+                    className={`text-sm text-zinc-100 ${
                       notif.read ? "font-medium" : "font-bold"
                     }`}
                   >
                     {notif.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">{notif.body}</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {new Date(notif.date).toLocaleDateString()} at{" "}
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                    {notif.body}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 mt-3">
+                    {new Date(notif.date).toLocaleDateString()} •{" "}
                     {new Date(notif.date).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </p>
                 </div>
-                <div className="flex flex-col space-y-2 ml-2">
-                  {!notif.read && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMarkAsRead(notif);
-                      }}
-                      className="p-1 text-indigo-600 hover:bg-indigo-50 rounded-full"
-                      title="Mark as read"
-                    >
-                      <Check size={16} />
-                    </button>
-                  )}
+              </div>
+
+              {/* Actions Toolbar */}
+              <div className="flex gap-2 mt-3 pt-3 border-t border-zinc-800/50 justify-end">
+                {!notif.read && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(notif.id);
+                      handleMarkAsRead(notif);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full"
-                    title="Delete"
+                    className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-indigo-400 hover:bg-indigo-500/10 transition-colors"
                   >
-                    <Trash2 size={16} />
+                    <Check size={12} /> Mark Read
                   </button>
-                </div>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(notif.id);
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
               </div>
             </div>
           ))}
