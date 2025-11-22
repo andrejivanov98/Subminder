@@ -20,6 +20,19 @@ import AlertModal from "./AlertModal";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
+// Helper to calculate date based on cycle
+const calculateNextDate = (cycle: SubscriptionCycle) => {
+  const date = new Date();
+  if (cycle === "weekly") {
+    date.setDate(date.getDate() + 7);
+  } else if (cycle === "monthly") {
+    date.setMonth(date.getMonth() + 1);
+  } else if (cycle === "yearly") {
+    date.setFullYear(date.getFullYear() + 1);
+  }
+  return date.toISOString().split("T")[0];
+};
+
 interface AddSubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -53,14 +66,12 @@ export default function AddSubscriptionModal({
     reminderDays: 3,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFree, setIsFree] = useState(false); // New state for free subs
+  const [isFree, setIsFree] = useState(false);
 
-  // Confirmation Dialog State
   const [confirmAction, setConfirmAction] = useState<
     "delete" | "extend" | null
   >(null);
 
-  // Alert Modal State
   const [alertState, setAlertState] = useState<{
     isOpen: boolean;
     title: string;
@@ -89,13 +100,13 @@ export default function AddSubscriptionModal({
           managementUrl: initialData.managementUrl || "",
           reminderDays: initialData.reminderDays || 3,
         });
-        setIsFree(initialData.cost === 0); // Set toggle based on existing cost
+        setIsFree(initialData.cost === 0);
       } else {
         setFormData({
           serviceName: "",
           cost: 0,
           currency: "USD",
-          nextBillDate: getTodayDate(),
+          nextBillDate: calculateNextDate("monthly"),
           cycle: "monthly",
           category: "Entertainment",
           managementUrl: "",
@@ -106,7 +117,6 @@ export default function AddSubscriptionModal({
     }
   }, [isOpen, initialData]);
 
-  // Update cost to 0 if isFree is toggled on
   useEffect(() => {
     if (isFree) {
       setFormData((prev) => ({ ...prev, cost: 0 }));
@@ -117,7 +127,6 @@ export default function AddSubscriptionModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // Updated validation: Allow cost 0 if isFree is true
     if (
       !formData.serviceName ||
       (!isFree && formData.cost <= 0) ||
@@ -139,7 +148,7 @@ export default function AddSubscriptionModal({
 
       const dataToSave = {
         ...formData,
-        cost: isFree ? 0 : formData.cost, // Ensure 0 if free
+        cost: isFree ? 0 : formData.cost,
         nextBillDate: Timestamp.fromDate(utcDate),
       };
 
@@ -170,11 +179,27 @@ export default function AddSubscriptionModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "cost" || name === "reminderDays" ? parseFloat(value) : value,
-    }));
+
+    setFormData((prev) => {
+      // Use a specific record type instead of 'any'
+      const updates: Record<string, string | number> = { [name]: value };
+
+      // Handle numeric fields
+      if (name === "cost" || name === "reminderDays") {
+        updates[name] = parseFloat(value);
+      }
+
+      // Auto-calculate date if cycle changes
+      if (name === "cycle") {
+        const newCycle = value as SubscriptionCycle;
+        if (CYCLES.includes(newCycle)) {
+          updates.nextBillDate = calculateNextDate(newCycle);
+        }
+      }
+
+      // Cast the result back to SubscriptionFormData
+      return { ...prev, ...updates } as SubscriptionFormData;
+    });
   };
 
   const handleDelete = async () => {
@@ -229,7 +254,6 @@ export default function AddSubscriptionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
-      {/* Alert Modal Overlay */}
       <AlertModal
         isOpen={alertState.isOpen}
         title={alertState.title}
@@ -240,7 +264,6 @@ export default function AddSubscriptionModal({
       <div className="absolute inset-0" onClick={onClose} />
 
       <div className="relative bg-slate-900 w-full max-w-md rounded-2xl border border-slate-800 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[85dvh] overflow-hidden">
-        {/* Confirmation Overlay for Actions */}
         {confirmAction && (
           <div className="absolute inset-0 z-20 bg-slate-900/95 backdrop-blur flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
             <h3 className="text-xl font-bold text-white mb-2">
@@ -286,7 +309,6 @@ export default function AddSubscriptionModal({
           </div>
         )}
 
-        {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-800 shrink-0">
           <h2 className="text-lg font-bold text-white">
             {initialData ? "Edit Subscription" : "Add Subscription"}
@@ -299,7 +321,6 @@ export default function AddSubscriptionModal({
           </button>
         </div>
 
-        {/* Scrollable Form */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
           <form id="subForm" onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -315,11 +336,9 @@ export default function AddSubscriptionModal({
               />
             </div>
 
-            {/* Cost with Toggle */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className={labelClass}>Cost</label>
-                {/* Free/Trial Toggle */}
                 <div
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => setIsFree(!isFree)}
@@ -444,7 +463,6 @@ export default function AddSubscriptionModal({
           </form>
         </div>
 
-        {/* Fixed Footer */}
         <div className="p-5 border-t border-slate-800 bg-slate-900 shrink-0 z-10 flex flex-col gap-3">
           <button
             form="subForm"

@@ -1,11 +1,13 @@
 // src/components/Dashboard.tsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Plus,
   Wallet,
   CheckCircle2,
   User as UserIcon,
   LogIn,
+  LogOut,
+  ChevronDown,
   X,
 } from "lucide-react";
 import type { Subscription } from "../types";
@@ -14,9 +16,15 @@ import AddSubscriptionModal from "./AddSubscriptionModal";
 import NotificationPrompt from "./NotificationPrompt";
 import Logo from "./Logo";
 import AlertModal from "./AlertModal";
+import ConfirmModal from "./ConfirmModal"; // Import the new component
 
-import { googleProvider } from "../firebase";
-import { linkWithPopup, type User } from "firebase/auth";
+import { googleProvider, auth } from "../firebase"; // Ensure 'auth' is imported
+import {
+  linkWithPopup,
+  signInWithPopup,
+  signOut,
+  type User,
+} from "firebase/auth";
 import { FirebaseError } from "firebase/app";
 
 const getTodayDate = () => {
@@ -41,51 +49,103 @@ export default function Dashboard({
   const [editingSubscription, setEditingSubscription] =
     useState<Subscription | null>(null);
 
-  // State for Link Account Dialog
+  // UI States
   const [isLinkConfirmOpen, setIsLinkConfirmOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // State for Custom Alerts
-  const [alertState, setAlertState] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-  }>({ isOpen: false, title: "", message: "" });
+  // Alert & Confirm Modal States
+  const [alertState, setAlertState] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const showAlert = (title: string, message: string) => {
     setAlertState({ isOpen: true, title, message });
   };
 
-  const closeAlert = () => {
-    setAlertState((prev) => ({ ...prev, isOpen: false }));
+  const handleUserIconClick = () => {
+    if (user?.isAnonymous) {
+      // If guest, go straight to link flow
+      setIsLinkConfirmOpen(true);
+    } else {
+      // If registered, toggle menu
+      setIsUserMenuOpen(!isUserMenuOpen);
+    }
   };
 
-  const handleLinkClick = () => {
-    setIsLinkConfirmOpen(true);
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsUserMenuOpen(false);
+      // App.tsx auth listener will automatically sign you in as a new guest
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const confirmLinkAccount = async () => {
     if (!user) return;
 
     try {
+      // 1. Try to LINK the current guest session to Google
       await linkWithPopup(user, googleProvider);
       setIsLinkConfirmOpen(false);
       showAlert(
         "Account Linked",
-        "Success! Your account is now linked to Google."
+        "Success! Your subscriptions are now saved to your Google account."
       );
     } catch (error) {
-      console.error("Error linking account:", error);
+      console.error("Auth Action Error:", error);
       setIsLinkConfirmOpen(false);
+
+      // 2. If Link fails because account exists, offer to LOGIN
       if (
         error instanceof FirebaseError &&
         error.code === "auth/credential-already-in-use"
       ) {
+        setConfirmState({
+          isOpen: true,
+          title: "Account Already Exists",
+          message:
+            "This Google account is already registered. Do you want to log in with it instead? \n\n(Note: Current guest data will be replaced by your saved account data).",
+          onConfirm: async () => {
+            setConfirmState((prev) => ({ ...prev, isOpen: false }));
+            try {
+              // Switch to the existing user
+              await signInWithPopup(auth, googleProvider);
+            } catch (loginError) {
+              console.error("Login Error:", loginError);
+              showAlert(
+                "Login Failed",
+                "Could not log in to your Google account."
+              );
+            }
+          },
+        });
+      } else {
         showAlert(
           "Link Failed",
-          "This Google account is already used. Please sign out and sign in with that account."
+          "Failed to connect to Google. Please try again."
         );
-      } else {
-        showAlert("Link Failed", "Failed to link account. Please try again.");
       }
     }
   };
@@ -173,14 +233,6 @@ export default function Dashboard({
 
   return (
     <div className="max-w-2xl mx-auto pb-24">
-      {/* Global Alert Modal */}
-      <AlertModal
-        isOpen={alertState.isOpen}
-        title={alertState.title}
-        message={alertState.message}
-        onClose={closeAlert}
-      />
-
       {/* Sticky Header */}
       <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 pt-safe px-6 pb-4">
         <div className="flex justify-between items-center mb-6 mt-2">
@@ -193,44 +245,82 @@ export default function Dashboard({
             </h1>
           </div>
 
-          {/* User Profile / Link Button */}
-          <button
-            onClick={user?.isAnonymous ? handleLinkClick : undefined}
-            className="relative p-2 rounded-full bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            aria-label="User Account"
-            title={
-              user?.isAnonymous ? "Guest Account" : "Account linked with Google"
-            }
-          >
-            {user?.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt="Profile"
-                className="w-6 h-6 rounded-full"
-              />
-            ) : (
-              <UserIcon size={20} />
-            )}
+          {/* User Profile Section */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={handleUserIconClick}
+              className={`relative p-1 rounded-full transition-all flex items-center gap-1 group ${
+                user?.isAnonymous
+                  ? "bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+                  : "hover:opacity-80"
+              }`}
+              aria-label="User Account"
+              title={
+                user?.isAnonymous
+                  ? "Guest Account"
+                  : `Signed in as ${user?.displayName}`
+              }
+            >
+              {user?.photoURL ? (
+                // REGISTERED: Clean avatar, no dots
+                <img
+                  src={user.photoURL}
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full border-2 border-slate-800 object-cover"
+                />
+              ) : (
+                // GUEST: Icon with Amber Dot
+                <div className="p-1.5">
+                  <UserIcon size={22} />
+                  {user?.isAnonymous && (
+                    <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-amber-500 border-2 border-slate-950 rounded-full"></span>
+                  )}
+                </div>
+              )}
 
-            {/* Status Indicators */}
-            {user?.isAnonymous ? (
-              // Amber dot for Guest
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-amber-500 border-2 border-slate-950 rounded-full"></span>
-            ) : (
-              // Green dot for Linked
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
+              {!user?.isAnonymous && (
+                <ChevronDown
+                  size={14}
+                  className={`text-slate-400 mr-1 transition-transform duration-200 ${
+                    isUserMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              )}
+            </button>
+
+            {/* User Dropdown Menu */}
+            {isUserMenuOpen && !user?.isAnonymous && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200 z-50">
+                <div className="p-4 border-b border-slate-800 bg-slate-800/30">
+                  <p className="text-white font-bold text-sm truncate">
+                    {user?.displayName || "User"}
+                  </p>
+                  <p className="text-slate-400 text-xs truncate mt-0.5">
+                    {user?.email}
+                  </p>
+                </div>
+                <div className="p-1.5">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors"
+                  >
+                    <LogOut size={16} />
+                    Log Out
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
         </div>
 
         {/* Guest Mode Banner */}
         {user?.isAnonymous && (
           <div
-            onClick={handleLinkClick}
-            className="mb-6 flex items-center justify-between bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 cursor-pointer hover:bg-indigo-500/20 transition-colors"
+            onClick={() => setIsLinkConfirmOpen(true)}
+            className="mb-6 flex items-center justify-between bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 cursor-pointer hover:bg-indigo-500/20 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-1.5 rounded-full text-white shadow-lg shadow-blue-900/20">
+              <div className="bg-blue-600 p-1.5 rounded-full text-white shadow-lg shadow-blue-900/20 group-hover:scale-110 transition-transform">
                 <LogIn size={14} />
               </div>
               <div>
@@ -298,11 +388,28 @@ export default function Dashboard({
         </button>
       </div>
 
+      {/* Modals */}
       <AddSubscriptionModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         userId={userId}
         initialData={editingSubscription}
+      />
+
+      <AlertModal
+        isOpen={alertState.isOpen}
+        title={alertState.title}
+        message={alertState.message}
+        onClose={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText="Log In"
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((prev) => ({ ...prev, isOpen: false }))}
       />
 
       {/* Link Account Modal */}
