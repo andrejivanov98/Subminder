@@ -1,4 +1,3 @@
-// src/components/NavBar.tsx
 import { Home, BarChart2, Bell } from "lucide-react";
 import type { View } from "../App";
 

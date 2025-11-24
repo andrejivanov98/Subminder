@@ -1,4 +1,3 @@
-// src/components/AlertModal.tsx
 import { X } from "lucide-react";
 
 interface AlertModalProps {

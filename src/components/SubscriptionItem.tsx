@@ -1,4 +1,3 @@
-// src/components/SubscriptionItem.tsx
 import { AlertCircle } from "lucide-react";
 import type { Subscription, SubscriptionCategory } from "../types";
 
@@ -53,7 +52,7 @@ export default function SubscriptionItem({
   const { daysLeft, statusColor, statusText, urgencyBorder } =
     getDaysLeftInfo(nextBillDate);
 
-  const symbol = "$"; // Always $
+  const symbol = "$";
   const colorClass = CATEGORY_COLORS[category] || "bg-slate-700";
 
   return (

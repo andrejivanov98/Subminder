@@ -1,4 +1,3 @@
-// src/components/AddSubscriptionModal.tsx
 import { useState, useEffect, type FormEvent } from "react";
 import { X } from "lucide-react";
 import type {

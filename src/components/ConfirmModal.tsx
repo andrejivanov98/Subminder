@@ -1,4 +1,3 @@
-// src/components/ConfirmModal.tsx
 import { X, AlertCircle } from "lucide-react";
 
 interface ConfirmModalProps {

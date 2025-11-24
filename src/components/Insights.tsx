@@ -1,4 +1,3 @@
-// src/components/Insights.tsx
 import { useMemo } from "react";
 import type { Subscription } from "../types";
 import {
@@ -15,7 +14,6 @@ interface InsightsProps {
   subscriptions: Subscription[];
 }
 
-// Custom interface for our data structure inside the legend
 interface LegendEntry {
   payload?: {
     percent?: number;
@@ -93,8 +91,8 @@ export default function Insights({ userId, subscriptions }: InsightsProps) {
                 <Tooltip
                   formatter={(value: number) => `$${value.toFixed(2)}`}
                   contentStyle={{
-                    backgroundColor: "#0f172a", // slate-900
-                    borderColor: "#1e293b", // slate-800
+                    backgroundColor: "#0f172a",
+                    borderColor: "#1e293b",
                     borderRadius: "12px",
                     color: "#f8fafc",
                     boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
@@ -105,8 +103,6 @@ export default function Insights({ userId, subscriptions }: InsightsProps) {
                   verticalAlign="bottom"
                   height={36}
                   iconType="circle"
-                  // We use 'unknown' here to avoid the type mismatch error with Recharts' internal types
-                  // and avoid 'any' to satisfy the linter. We then cast it safely.
                   formatter={(value, entry: unknown) => {
                     const typedEntry = entry as LegendEntry;
                     const percent = typedEntry.payload?.percent

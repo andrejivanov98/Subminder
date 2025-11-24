@@ -1,4 +1,3 @@
-// src/components/NotificationCenter.tsx
 import { Bell, Check, Trash2 } from "lucide-react";
 import type { AppNotification } from "../types";
 import { db, doc, deleteDoc, updateDoc } from "../firebase";
@@ -52,7 +51,6 @@ export default function NotificationCenter({
           <h1 className="text-2xl font-bold text-white tracking-tight">
             Notifications
           </h1>
-          {/* Added Subtitle */}
           <p className="text-slate-400 text-sm mt-1">
             Alerts for your upcoming payments.
           </p>
@@ -84,7 +82,6 @@ export default function NotificationCenter({
               }`}
               onClick={() => handleMarkAsRead(notif)}
             >
-              {/* Unread Indicator Strip */}
               {!notif.read && (
                 <div className="absolute left-0 top-4 bottom-4 w-1 bg-blue-500 rounded-r-full" />
               )}

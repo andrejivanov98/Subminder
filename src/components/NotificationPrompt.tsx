@@ -1,4 +1,3 @@
-// src/components/NotificationPrompt.tsx
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { getToken } from "firebase/messaging";

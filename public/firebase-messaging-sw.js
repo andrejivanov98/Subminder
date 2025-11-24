@@ -1,13 +1,9 @@
-// public/firebase-messaging-sw.js
-
 // This file is required to handle background notifications
 
-// Import and initialize the Firebase SDK
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
 // --- IMPORTANT ---
-// You must copy your *exact* firebaseConfig object here
 // from src/firebase.ts
 const firebaseConfig = {
   apiKey: "AIzaSyD_2iiZsTcdUZB6i7zG_5ZLYu-K6IP6u8A",
@@ -32,11 +28,10 @@ messaging.onBackgroundMessage((payload) => {
     payload
   );
   
-  // Customize notification here
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/favicon.ico", // Or your app's icon
+    icon: "/favicon.ico",
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

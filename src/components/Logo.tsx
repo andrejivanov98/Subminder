@@ -1,4 +1,3 @@
-// src/components/Logo.tsx
 interface LogoProps {
   className?: string;
 }
@@ -22,7 +21,6 @@ export default function Logo({ className = "h-8" }: LogoProps) {
               x2="100%"
               y2="100%"
             >
-              {/* Updated to match Tailwind blue-600 and indigo-600 exactly */}
               <stop offset="0%" stopColor="#2563eb" />
               <stop offset="100%" stopColor="#4f46e5" />
             </linearGradient>

@@ -1,4 +1,3 @@
-// vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -10,25 +9,27 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "SubMinder",
-        short_name: "SubMinder",
+        name: "subminder",
+        short_name: "subminder",
         description: "Track and manage your subscriptions.",
-        theme_color: "#020617", // Updated to Slate-950
-        background_color: "#020617", // Updated to Slate-950
+        theme_color: "#020617",
+        background_color: "#020617",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
         icons: [
           {
-            src: "pwa-192x192.png", // You will need to generate these icons with the new logo
+            src: "pwa-192x192.png",
             sizes: "192x192",
             type: "image/png",
+            purpose: "any maskable"
           },
           {
             src: "pwa-512x512.png",
             sizes: "512x512",
             type: "image/png",
+            purpose: "any maskable"
           },
         ],
       },

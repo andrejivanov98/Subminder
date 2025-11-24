@@ -1,4 +1,3 @@
-// src/components/SubscriptionList.tsx
 import type { Subscription } from "../types";
 import SubscriptionItem from "./SubscriptionItem";
 

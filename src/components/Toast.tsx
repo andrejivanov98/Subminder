@@ -1,4 +1,3 @@
-// src/components/Toast.tsx
 import { Bell, X } from "lucide-react";
 import { useEffect } from "react";
 

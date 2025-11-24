@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth"; // Added GoogleAuthProvider
-
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import {
   getFirestore,
   collection,
@@ -14,11 +13,7 @@ import {
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import {
-  getMessaging,
-  onMessage,
-  type MessagePayload,
-} from "firebase/messaging";
+import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD_2iiZsTcdUZB6i7zG_5ZLYu-K6IP6u8A",
@@ -37,15 +32,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const messaging = getMessaging(app);
-export const googleProvider = new GoogleAuthProvider(); // Export the provider
-
-export const onMessageListener = () =>
-  new Promise<MessagePayload>((resolve) => {
-    onMessage(messaging, (payload) => {
-      console.log("Foreground message received:", payload);
-      resolve(payload);
-    });
-  });
+export const googleProvider = new GoogleAuthProvider();
 
 export {
   collection,

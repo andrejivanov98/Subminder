@@ -1,4 +1,3 @@
-// functions/src/index.ts
 import { logger } from "firebase-functions";
 import { pubsub } from "firebase-functions/v1";
 import * as admin from "firebase-admin";
@@ -73,7 +72,6 @@ export const scheduledReminderCheck = pubsub
       const subData = subDoc.data();
       const daysBefore = subData.reminderDays || 3;
 
-      // Removed currency logic, default to $
       const symbol = "$";
 
       logger.info(

@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useState, useEffect, useMemo } from "react";
 import {
   auth,
@@ -76,7 +75,6 @@ function App() {
             nextBillDate: d.nextBillDate.toDate().toISOString().split("T")[0],
             category: d.category,
             managementUrl: d.managementUrl,
-            // --- FIX: Added reminderDays mapping ---
             reminderDays: d.reminderDays,
           } as Subscription);
         });
@@ -194,5 +192,5 @@ function App() {
     </div>
   );
 }
-  
+
 export default App;

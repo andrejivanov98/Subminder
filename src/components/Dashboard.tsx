@@ -1,4 +1,3 @@
-// src/components/Dashboard.tsx
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Plus,
@@ -16,9 +15,9 @@ import AddSubscriptionModal from "./AddSubscriptionModal";
 import NotificationPrompt from "./NotificationPrompt";
 import Logo from "./Logo";
 import AlertModal from "./AlertModal";
-import ConfirmModal from "./ConfirmModal"; // Import the new component
+import ConfirmModal from "./ConfirmModal";
 
-import { googleProvider, auth } from "../firebase"; // Ensure 'auth' is imported
+import { googleProvider, auth } from "../firebase";
 import {
   linkWithPopup,
   signInWithPopup,
@@ -96,7 +95,6 @@ export default function Dashboard({
     try {
       await signOut(auth);
       setIsUserMenuOpen(false);
-      // App.tsx auth listener will automatically sign you in as a new guest
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -262,14 +260,14 @@ export default function Dashboard({
               }
             >
               {user?.photoURL ? (
-                // REGISTERED: Clean avatar, no dots
+                // REGISTERED
                 <img
                   src={user.photoURL}
                   alt="Profile"
                   className="w-9 h-9 rounded-full border-2 border-slate-800 object-cover"
                 />
               ) : (
-                // GUEST: Icon with Amber Dot
+                // GUEST
                 <div className="p-1.5">
                   <UserIcon size={22} />
                   {user?.isAnonymous && (
