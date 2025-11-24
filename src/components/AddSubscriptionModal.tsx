@@ -98,7 +98,8 @@ export default function AddSubscriptionModal({
           cycle: initialData.cycle,
           category: initialData.category,
           managementUrl: initialData.managementUrl || "",
-          reminderDays: initialData.reminderDays || 3,
+          // Use the stored reminderDays, fallback to 3 only if undefined
+          reminderDays: initialData.reminderDays ?? 3,
         });
         setIsFree(initialData.cost === 0);
       } else {
@@ -115,7 +116,7 @@ export default function AddSubscriptionModal({
         setIsFree(false);
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData]); // initialData is key here
 
   useEffect(() => {
     if (isFree) {
@@ -181,15 +182,12 @@ export default function AddSubscriptionModal({
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      // Use a specific record type instead of 'any'
       const updates: Record<string, string | number> = { [name]: value };
 
-      // Handle numeric fields
       if (name === "cost" || name === "reminderDays") {
         updates[name] = parseFloat(value);
       }
 
-      // Auto-calculate date if cycle changes
       if (name === "cycle") {
         const newCycle = value as SubscriptionCycle;
         if (CYCLES.includes(newCycle)) {
@@ -197,7 +195,6 @@ export default function AddSubscriptionModal({
         }
       }
 
-      // Cast the result back to SubscriptionFormData
       return { ...prev, ...updates } as SubscriptionFormData;
     });
   };

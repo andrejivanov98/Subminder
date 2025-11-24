@@ -16,7 +16,7 @@ import {
   type User,
 } from "firebase/auth";
 import { onMessage } from "firebase/messaging";
-import { Loader2 } from "lucide-react"; // Changed icon for loading
+import { Loader2 } from "lucide-react";
 
 import Dashboard from "./components/Dashboard";
 import Insights from "./components/Insights";
@@ -76,6 +76,8 @@ function App() {
             nextBillDate: d.nextBillDate.toDate().toISOString().split("T")[0],
             category: d.category,
             managementUrl: d.managementUrl,
+            // --- FIX: Added reminderDays mapping ---
+            reminderDays: d.reminderDays,
           } as Subscription);
         });
         setSubscriptions(list);
@@ -168,7 +170,6 @@ function App() {
         />
       )}
 
-      {/* Added padding bottom to avoid content hiding behind navbar */}
       <main className="pb-28">
         {view === "dashboard" && (
           <Dashboard
@@ -193,5 +194,5 @@ function App() {
     </div>
   );
 }
-
+  
 export default App;
