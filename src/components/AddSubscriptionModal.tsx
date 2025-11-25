@@ -46,7 +46,9 @@ const CATEGORIES: SubscriptionCategory[] = [
   "Utility",
   "Other",
 ];
-const CYCLES: SubscriptionCycle[] = ["monthly", "yearly", "weekly"];
+
+// Updated order: Weekly -> Monthly -> Yearly
+const CYCLES: SubscriptionCycle[] = ["weekly", "monthly", "yearly"];
 
 export default function AddSubscriptionModal({
   isOpen,

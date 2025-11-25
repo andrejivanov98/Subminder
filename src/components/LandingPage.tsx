@@ -9,6 +9,7 @@ import {
   Smartphone,
   Zap,
   DownloadCloud,
+  Rocket,
 } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
 import Logo from "./Logo";
@@ -22,12 +23,6 @@ export default function LandingPage() {
       <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 transition-all">
         <nav className="px-6 py-4 flex justify-between items-center max-w-5xl mx-auto">
           <Logo />
-          <button
-            onClick={() => navigate("/app")}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-full transition-colors border border-slate-700"
-          >
-            Launch App
-          </button>
         </nav>
       </div>
 
@@ -51,15 +46,10 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
-            onClick={() => navigate("/app")}
-            className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
-          >
-            Launch App
-          </button>
+          {/* REMOVED: Launch App button from here */}
           <a
             href="#install"
-            className="w-full sm:w-auto px-8 py-4 bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium rounded-xl border border-slate-800 transition-colors"
+            className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
           >
             How to Install
           </a>
@@ -169,7 +159,7 @@ export default function LandingPage() {
             </h3>
             <ol className="space-y-5 text-slate-300 text-sm relative z-10">
               <InstallStep number={1}>
-                Tap <strong>Launch App</strong> above to open the app view.
+                Tap <strong>Launch App</strong> below to open the app view.
               </InstallStep>
               <InstallStep number={2}>
                 Tap the <strong>Share</strong> icon{" "}
@@ -194,7 +184,7 @@ export default function LandingPage() {
             </h3>
             <ol className="space-y-5 text-slate-300 text-sm relative z-10">
               <InstallStep number={1}>
-                Tap <strong>Launch App</strong> above to open the app view.
+                Tap <strong>Launch App</strong> below to open the app view.
               </InstallStep>
               <InstallStep number={2}>
                 Tap the <strong>Three Dots</strong>{" "}
@@ -211,6 +201,18 @@ export default function LandingPage() {
             </ol>
           </div>
         </div>
+      </section>
+
+      {/* ADDED: Launch App Section at the Bottom */}
+      <section className="px-6 pb-24 text-center">
+        <p className="text-slate-400 mb-6 text-sm">Ready to get started?</p>
+        <button
+          onClick={() => navigate("/app")}
+          className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all hover:scale-105 text-lg"
+        >
+          <Rocket size={24} />
+          Launch App
+        </button>
       </section>
 
       <footer className="py-12 text-center text-slate-600 text-sm border-t border-slate-900">
