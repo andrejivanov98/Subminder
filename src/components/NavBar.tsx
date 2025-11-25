@@ -1,5 +1,5 @@
 import { Home, BarChart2, Bell } from "lucide-react";
-import type { View } from "../App";
+import type { View } from "../SubMinderApp";
 
 interface NavItemProps {
   icon: React.ElementType;
