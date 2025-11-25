@@ -1,4 +1,3 @@
-// src/components/LandingPage.tsx
 import { useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
@@ -98,7 +97,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* NEW: PWA Benefits Section ("Why no App Store?") */}
+      {/* PWA Benefits Section */}
       <section className="px-6 py-16 max-w-4xl mx-auto">
         <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-8 md:p-12">
           <div className="text-center mb-10">
@@ -144,7 +143,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Updated Installation Instructions */}
+      {/* Installation Instructions */}
       <section
         id="install"
         className="px-6 py-20 max-w-4xl mx-auto border-t border-slate-800/50"

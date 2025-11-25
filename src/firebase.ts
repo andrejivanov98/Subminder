@@ -14,24 +14,26 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
+import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD_2iiZsTcdUZB6i7zG_5ZLYu-K6IP6u8A",
-  authDomain: "subminder-a485f.firebaseapp.com",
-  projectId: "subminder-a485f",
-  storageBucket: "subminder-a485f.firebasestorage.app",
-  messagingSenderId: "665141089622",
-  appId: "1:665141089622:web:673132da5bc67d1a6b32f7",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: "G-YFX70E7Q9J",
 };
 
-export const VAPID_KEY =
-  "BG96bWwqe20xCCDC1YLlSqGh6K9FkWIhqk8YUnLwYWpoNtYt92qK2vZUEbHPgZRnO1YpoxFpWBhpZjorjtROSGU";
+export const VAPID_KEY = import.meta.env.VITE_VAPID_KEY;
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const messaging = getMessaging(app);
+export const analytics = getAnalytics(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export {
