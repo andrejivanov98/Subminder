@@ -19,7 +19,8 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center w-full pt-2 pb-1 transition-all duration-200 ${
+      // Increased bottom padding from pb-1 to pb-4 to lift items up
+      className={`relative flex flex-col items-center justify-center w-full pt-2 pb-4 transition-all duration-200 ${
         isActive ? "text-blue-400" : "text-slate-500 hover:text-slate-300"
       }`}
     >

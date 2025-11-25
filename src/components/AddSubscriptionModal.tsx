@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import type {
   SubscriptionFormData,
   SubscriptionCycle,
@@ -47,7 +47,7 @@ const CATEGORIES: SubscriptionCategory[] = [
   "Other",
 ];
 
-// Updated order: Weekly -> Monthly -> Yearly
+// Order: Weekly -> Monthly -> Yearly
 const CYCLES: SubscriptionCycle[] = ["weekly", "monthly", "yearly"];
 
 export default function AddSubscriptionModal({
@@ -99,7 +99,6 @@ export default function AddSubscriptionModal({
           cycle: initialData.cycle,
           category: initialData.category,
           managementUrl: initialData.managementUrl || "",
-          // Use the stored reminderDays, fallback to 3 only if undefined
           reminderDays: initialData.reminderDays ?? 3,
         });
         setIsFree(initialData.cost === 0);
@@ -117,7 +116,7 @@ export default function AddSubscriptionModal({
         setIsFree(false);
       }
     }
-  }, [isOpen, initialData]); // initialData is key here
+  }, [isOpen, initialData]);
 
   useEffect(() => {
     if (isFree) {
@@ -249,6 +248,8 @@ export default function AddSubscriptionModal({
     "block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider";
   const inputClass =
     "w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-600 transition-all";
+  // Special class for selects to hide default arrow and add padding
+  const selectClass = `${inputClass} appearance-none pr-10 cursor-pointer`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
@@ -390,61 +391,80 @@ export default function AddSubscriptionModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Cycle</label>
-                <select
-                  name="cycle"
-                  value={formData.cycle}
-                  onChange={handleChange}
-                  className={inputClass}
-                >
-                  {CYCLES.map((c) => (
-                    <option key={c} value={c}>
-                      {c.charAt(0).toUpperCase() + c.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    name="cycle"
+                    value={formData.cycle}
+                    onChange={handleChange}
+                    className={selectClass}
+                  >
+                    {CYCLES.map((c) => (
+                      <option key={c} value={c}>
+                        {c.charAt(0).toUpperCase() + c.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                    size={16}
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelClass}>Remind Me</label>
-                <select
-                  name="reminderDays"
-                  value={formData.reminderDays}
-                  onChange={handleChange}
-                  className={inputClass}
-                >
-                  <option value="1">1 day before</option>
-                  <option value="3">3 days before</option>
-                  <option value="7">1 week before</option>
-                  <option value="14">2 weeks before</option>
-                </select>
+                <div className="relative">
+                  <select
+                    name="reminderDays"
+                    value={formData.reminderDays}
+                    onChange={handleChange}
+                    className={selectClass}
+                  >
+                    <option value="1">1 day before</option>
+                    <option value="3">3 days before</option>
+                    <option value="7">1 week before</option>
+                    <option value="14">2 weeks before</option>
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                    size={16}
+                  />
+                </div>
               </div>
             </div>
 
             <div>
               <label className={labelClass}>Next Bill Date</label>
+              {/* accent-blue-600 helps theme the native date picker controls on supported browsers */}
               <input
                 type="date"
                 name="nextBillDate"
                 value={formData.nextBillDate}
                 onChange={handleChange}
-                className={`${inputClass} [color-scheme:dark]`}
+                className={`${inputClass} [color-scheme:dark] accent-blue-600`}
                 required
               />
             </div>
 
             <div>
               <label className={labelClass}>Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className={inputClass}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className={selectClass}
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                  size={16}
+                />
+              </div>
             </div>
 
             <div>
