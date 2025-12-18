@@ -61,6 +61,7 @@ function App() {
   useEffect(() => {
     if (!user) return;
 
+    // 1. Subscription Listener
     const subUnsub = onSnapshot(
       query(collection(db, "users", user.uid, "subscriptions")),
       (snapshot) => {
@@ -81,9 +82,13 @@ function App() {
         setSubscriptions(list);
         setIsLoadingData(false);
       },
-      (error) => console.error("Error fetching subs:", error)
+      (error) => {
+        console.error("Error fetching subs:", error);
+        setIsLoadingData(false);
+      }
     );
 
+    // 2. Notification Listener
     const notifUnsub = onSnapshot(
       query(collection(db, "users", user.uid, "notifications")),
       (snapshot) => {
@@ -101,6 +106,9 @@ function App() {
           });
         });
         setNotifications(list);
+      },
+      (error) => {
+        console.error("Error fetching notifications:", error);
       }
     );
 
